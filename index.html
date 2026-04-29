@@ -1,367 +1,270 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Turtle Clicker: Army of the Deep</title>
-<style>
-    :root {
-        --primary: #005f73;
-        --secondary: #0a9396;
-        --dark: #001219;
-        --accent: #ee9b00;
-        --prestige: #9b5de5;
-        --army: #bb3e03;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turtle Clicker: Eternal Deep</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary: #005f73; --secondary: #0a9396; --dark: #001219;
+            --accent: #ee9b00; --prestige: #9b5de5; --glass: rgba(255, 255, 255, 0.1);
+            --sun: #ffb703; --moon: #8ecae6; --wisdom: #94d2bd;
+        }
+        body {
+            margin:0; font-family: 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at center, var(--primary), var(--dark));
+            color: white; min-height: 100vh; user-select: none; overflow-x: hidden;
+        }
+        
+        /* NAVIGATION */
+        .tabs { display: flex; background: rgba(0, 18, 25, 0.95); position: sticky; top: 0; z-index: 100; border-bottom: 2px solid var(--secondary); flex-wrap: wrap; }
+        .tabs button { flex: 1; padding: 15px; border: none; background: transparent; color: #94d2bd; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 12px; text-transform: uppercase; min-width: 100px; }
+        .tabs button.active-tab { color: white; background: var(--glass); border-bottom: 4px solid var(--accent); }
 
-    body {
-        margin:0;
-        font-family: 'Segoe UI', sans-serif;
-        background: linear-gradient(var(--dark), var(--primary));
-        color: white;
-        min-height: 100vh;
-        user-select: none;
-    }
+        .page { display: none; padding: 20px; max-width: 1200px; margin: auto; animation: fadeIn 0.4s ease; }
+        .active { display: block; }
+        .center { text-align: center; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .tabs { display: flex; background: var(--dark); position: sticky; top: 0; z-index: 10; }
-    .tabs button { flex: 1; padding: 15px; border: none; background: transparent; color: #94d2bd; font-weight: bold; cursor: pointer; border-bottom: 3px solid transparent;}
-    .tabs button.active-tab { background: var(--primary); color: white; border-bottom: 3px solid var(--accent); }
+        /* HEADER */
+        .top-stats { background: rgba(0,0,0,0.5); padding: 20px; border-radius: 20px; margin-bottom: 20px; border-bottom: 4px solid var(--accent); }
+        .turtle-main { font-size: 100px; cursor: pointer; transition: transform 0.1s; display: inline-block; margin: 20px; filter: drop-shadow(0 0 20px var(--secondary)); }
+        .turtle-main:active { transform: scale(0.9); }
 
-    .page { display: none; padding: 20px; max-width: 800px; margin: auto; }
-    .active { display: block; }
-    .center { text-align: center; }
+        /* GRID SYSTEM */
+        .container { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; }
+        .card { background: var(--glass); padding: 15px; border-radius: 12px; border: 1px solid rgba(10, 147, 150, 0.3); position: relative; overflow: hidden; }
+        
+        /* TECH TREE */
+        .tech-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .tech-col { display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 15px; }
+        .node-card { cursor: pointer; border-left: 4px solid transparent; background: var(--glass); padding: 10px; border-radius: 8px; font-size: 14px; }
+        .node-c { border-left-color: var(--sun); } .node-e { border-left-color: var(--moon); } .node-k { border-left-color: var(--wisdom); }
+        .bought { background: rgba(238, 155, 0, 0.25); border-color: var(--accent); }
 
-    .turtle-main { font-size: 100px; cursor: pointer; transition: transform 0.1s; display: inline-block; margin: 20px; }
-    .turtle-main:active { transform: scale(0.9); }
+        /* LOCK SYSTEM */
+        .lock-box { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.9); color: #ff6b6b; font-weight: bold; text-align: center; align-items: center; justify-content: center; z-index: 10; flex-direction: column; padding: 10px; font-size: 13px; }
+        .locked-card .lock-box { display: flex; }
+        .locked-card .content-box { opacity: 0.1; filter: blur(4px); }
 
-    .container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    
-    .card {
-        background: rgba(10, 147, 150, 0.2);
-        padding: 15px;
-        border-radius: 12px;
-        margin: 10px 0;
-        border: 1px solid var(--secondary);
-    }
-
-    .card.bought { border-color: var(--accent); background: rgba(238, 155, 0, 0.1); }
-    .card.choice-locked { opacity: 0.1; filter: grayscale(1); pointer-events: none; }
-    .prestige-node { border: 2px solid var(--prestige) !important; }
-
-    button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; border: none; background: var(--accent); font-weight: bold; cursor: pointer; color: var(--dark); }
-    button:disabled { background: #444; color: #888; cursor: not-allowed; }
-    
-    .ascend-btn { background: var(--prestige); color: white; font-size: 1.2em; padding: 20px; }
-    .army-btn { background: var(--army); color: white; }
-
-    .locked { display: none; }
-    .hidden { opacity: 0.3; filter: blur(2px); pointer-events: none; }
-    
-    .stats-header { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid var(--accent); }
-
-    .save-controls { margin-top: 30px; display: flex; gap: 10px; }
-    .btn-save { background: #94d2bd; }
-    .btn-reset { background: #ae2012; color: white; }
-</style>
+        button { width: 100%; padding: 10px; margin-top: 8px; border-radius: 6px; border: none; background: var(--accent); font-weight: bold; cursor: pointer; color: var(--dark); }
+        button:disabled { background: #333; color: #666; cursor: not-allowed; }
+        
+        #xp-bar-container { width: 200px; height: 8px; background: #111; margin: 10px auto; border-radius: 4px; }
+        #xp-bar { height: 100%; background: var(--wisdom); width: 0%; border-radius: 4px; transition: 0.2s; }
+    </style>
 </head>
-<body>
+<body onload="init()">
 
 <div class="tabs">
-    <button id="tab-game" class="active-tab" onclick="tab('game')">Game</button>
-    <button id="tab-army" onclick="tab('army')">🐢 Army</button>
-    <button id="tab-tree" onclick="tab('tree')">Tech Tree</button>
-    <button id="tab-shop" onclick="tab('shop')">Upgrades</button>
-    <button id="tab-ascend" style="color:var(--prestige)" onclick="tab('ascend')">Ascend</button>
+    <button id="tab-game" class="active-tab" onclick="tab('game')">🏠 Abyss</button>
+    <button id="tab-army" onclick="tab('army')">🐢 Squad</button>
+    <button id="tab-shop" onclick="tab('shop')">💎 Market</button>
+    <button id="tab-tree" onclick="tab('tree')">🧬 Tech</button>
+    <button id="tab-soul-shop" style="color:var(--prestige)" onclick="tab('soul-shop')">👻 Soul Forge</button>
+    <button id="tab-ascend-tab" onclick="tab('ascend-tab')">✨ Transcend</button>
     <button id="tab-settings" onclick="tab('settings')">⚙️</button>
 </div>
 
 <div id="game" class="page active center">
-    <div class="stats-header">
-        <h1>💰 <span id="money">0</span></h1>
-        <p>Level <span id="lvl">1</span> | Souls: <span style="color:var(--prestige)" id="souls">0</span></p>
+    <div class="top-stats">
+        <h1 style="font-size: 3em; margin: 0;">🐢 <span id="money">0</span></h1>
+        <p>Level <span id="lvl">1</span> | Souls: <span id="souls">0</span></p>
+        <div id="xp-bar-container"><div id="xp-bar"></div></div>
     </div>
-    <div class="turtle-main" onclick="clickTurtle()">🐢</div>
-    <div>
-        <p><b>Click Power:</b> <span id="stat-click">1</span></p>
-        <p><b>Army Auto-Click:</b> <span id="stat-auto">0</span>/s</p>
-    </div>
+    <div class="turtle-main" onclick="clickTurtle(event)">🐢</div>
 </div>
 
-<div id="army" class="page">
-    <h2>🐢 The Turtle Army</h2>
-    <p>Each turtle clicks for you. Buy 10 of a tier to unlock the next!</p>
-    <div id="army-container"></div>
-</div>
+<div id="army" class="page"><div id="army-container" class="container"></div></div>
+<div id="shop" class="page"><div id="shop-container" class="container"></div></div>
 
 <div id="tree" class="page">
-    <h2>🧬 Tech Tree</h2>
-    <div id="choice-section">
-        <h3>🔱 Primal Choice (Soul Required)</h3>
-        <p><small>Picking one locks the others until you Ascend again.</small></p>
-        <div class="container">
-            <div class="card prestige-node" id="p1" onclick="choiceNode('p1')"><b>Sun Turtle</b><br>+500% Click</div>
-            <div class="card prestige-node" id="p2" onclick="choiceNode('p2')"><b>Moon Turtle</b><br>+500% Auto</div>
-        </div>
-    </div>
-    <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
-    <div class="container">
-        <div>
-            <h3>⚔ Combat</h3>
-            <div class="card" onclick="node('c1')" id="c1"><b>Sharp Shell</b><br>Click +2</div>
-        </div>
-        <div>
-            <h3>🌊 Economy</h3>
-            <div class="card" onclick="node('e1')" id="e1"><b>Fast Current</b><br>Auto +2</div>
-        </div>
+    <div class="tech-grid">
+        <div class="tech-col" id="col-c"><h3 style="color:var(--sun)">⚔ Aggression</h3></div>
+        <div class="tech-col" id="col-e"><h3 style="color:var(--moon)">🌊 Prosperity</h3></div>
+        <div class="tech-col" id="col-k"><h3 style="color:var(--wisdom)">🧠 Insight</h3></div>
     </div>
 </div>
 
-<div id="shop" class="page">
-    <h2>🏪 Upgrade Shop</h2>
-    <div id="shop-container"></div>
+<div id="soul-shop" class="page center">
+    <h2>The Soul Forge</h2>
+    <p>Permanent cosmic buffs that survive Transcendence.</p>
+    <h3 style="color:var(--prestige)">Divine Souls: <span id="soul-shop-balance">0</span></h3>
+    <div id="soul-shop-container" class="container"></div>
 </div>
 
-<div id="ascend" class="page center">
-    <h2>✨ The Astral Shore</h2>
-    <div class="card" style="border: 2px solid var(--prestige)">
-        <p>Ascending resets your money, upgrades, levels, and army.</p>
-        <p><strong>Requirement: Level 10</strong></p>
-        <h3>Pending Souls: <span id="pending-souls">0</span></h3>
+<div id="ascend-tab" class="page center">
+    <div class="card" style="max-width: 400px; margin: auto; border-color: var(--prestige);">
+        <h1 id="pending-souls" style="font-size: 3em; color: var(--accent);">0</h1>
+        <p>Souls Gained on Rebirth</p>
+        <div id="ascend-msg" style="margin: 15px 0; font-weight: bold;"></div>
+        <button id="ascend-btn" onclick="ascend()" style="height: 50px;">TRANSCEND</button>
     </div>
-    <button class="ascend-btn" id="ascend-btn" onclick="ascend()">ASCEND</button>
-    <p id="ascend-msg" style="margin-top:10px; color: #ff4d4d; font-weight: bold;"></p>
 </div>
 
 <div id="settings" class="page center">
-    <h2>Settings</h2>
-    <div class="save-controls">
-        <button class="btn-save" onclick="saveGame()">Save Game</button>
-        <button class="btn-reset" onclick="resetGame()">Hard Reset</button>
-    </div>
-    <p id="save-status"></p>
+    <button onclick="saveGame()">FORCE SAVE</button>
+    <button onclick="hardReset()" style="background:#ae2012; color:white; margin-top: 10px;">HARD RESET</button>
 </div>
 
 <script>
-const initialState = {
-    money: 0, xp: 0, lvl: 1, xpNeed: 100,
-    souls: 0,
-    baseClick: 1, baseAuto: 0, mult: 1,
-    nodes: {},
-    choiceMade: false,
-    army: {
-        t1: { name: "Hatchling Swarm", count: 0, cost: 10, power: 1, unlocked: true },
-        t2: { name: "Snapping Squad", count: 0, cost: 25, power: 4, unlocked: false },
-        t3: { name: "Ancient Guard", count: 0, cost: 50, power: 7, unlocked: false },
-        t4: { name: "Colossal Titan", count: 0, cost: 200, power: 15, unlocked: false },
-        t5: { name: "Devils Art", count: 0, cost: 500, power: 36, unlocked: false},
-        t6: { name: "Edward army", count: 0, cost: 700, power: 45, unlocked: false},
-        t7: { name: "debugger", count: 0, cost: 950, power: 56, unlocked: false} 
-    },
-    upgrades: {
-        u1: { lvl: 0, cost: 15, grow: 1.4, name: "Muscle Training", type: 'click' },
-        u2: { lvl: 0, cost: 30, grow: 1.5, name: "Better Bait", type: 'auto' },
-        u3: { lvl: 0, cost: 50, grow: 2, name: "Must Click", type: 'click'},
-        u4: { lvl: 0, cost: 100, grow: 2.5, name: "Army Attack", type: 'auto'},
-        u5: { lvl: 0, cost: 124, grow: 3, name: "Fahhhhhh", type: 'click'}
+const UP_NAMES = ["Sharper Beak", "Weighted Shell", "Fin Exercises", "Bubble Breath", "Coral Armor", "Seaweed Snacks", "Hydro-Boost", "Saltwater Vitality", "Oceanic Might", "Deep Vision"];
+let INITIAL_STATE = {
+    money: 0, xp: 0, lvl: 1, xpNeed: 100, souls: 0, ascensions: 0, techRowsUnlocked: 1,
+    baseClick: 1, baseAuto: 0, xpMult: 1, nodes: {}, army: {}, upgrades: {},
+    soulUpgrades: {
+        s1: { name: "Abyssal Haste", desc: "+25% Global Speed", cost: 5, lvl: 0 },
+        s2: { name: "Ancient Memory", desc: "+50% XP Multiplier", cost: 10, lvl: 0 },
+        s3: { name: "Soul Keeper", desc: "Start with $1,000", cost: 25, lvl: 0 }
     }
 };
 
-let state = JSON.parse(JSON.stringify(initialState));
+let state = JSON.parse(JSON.stringify(INITIAL_STATE));
 
-// Save System
-function saveGame() {
-    localStorage.setItem("turtleClickerSave", JSON.stringify(state));
-    document.getElementById("save-status").innerText = "Game Saved!";
-    setTimeout(() => document.getElementById("save-status").innerText = "", 2000);
+function formatNum(n) {
+    if(n < 1000) return Math.floor(n);
+    let i = Math.floor(Math.log10(n) / 3);
+    const units = ["k", "M", "B", "T", "Qa", "Qi"];
+    return (n / Math.pow(10, i * 3)).toFixed(2) + units[i-1];
 }
 
-function loadGame() {
-    const saved = localStorage.getItem("turtleClickerSave");
-    if (saved) {
-        state = JSON.parse(saved);
-        // Ensure new properties from updates are handled
-        update();
+function init() {
+    const armyCont = document.getElementById('army-container');
+    const shopCont = document.getElementById('shop-container');
+    const soulCont = document.getElementById('soul-shop-container');
+
+    for(let i=1; i<=20; i++) {
+        state.army['t'+i] = { cost: 15 * Math.pow(10, i-1), power: Math.pow(8, i-1), count: 0 };
+        armyCont.innerHTML += `<div class="card" id="card-t${i}"><div class="lock-box">🔒 Prev Unit 10x</div><div class="content-box"><b>Unit ${i}</b><br>Owned: <span id="t${i}-qty">0</span><button id="t${i}-btn" onclick="buyArmy('t${i}')"></button></div></div>`;
     }
-}
 
-function resetGame() {
-    if(confirm("Are you sure? This deletes ALL progress, including souls!")) {
-        state = JSON.parse(JSON.stringify(initialState));
-        localStorage.removeItem("turtleClickerSave");
-        location.reload();
+    for(let i=1; i<=10; i++) {
+        state.upgrades['u'+i] = { name: UP_NAMES[i-1], lvlReq: i*5, cost: 50*Math.pow(7, i-1), type: i%2==0?'auto':'click', pwr: 10*Math.pow(7, i-1), lvlOwned: 0 };
+        shopCont.innerHTML += `<div class="card" id="card-u${i}"><div class="lock-box">🔒 Level ${i*5}</div><div class="content-box"><b>${UP_NAMES[i-1]}</b><br>Lv: <span id="u${i}-qty">0</span><button id="u${i}-btn" onclick="buyUpgrade('u${i}')"></button></div></div>`;
     }
-}
 
-function clickTurtle() { addResources(state.baseClick * state.mult); }
+    Object.keys(state.soulUpgrades).forEach(id => {
+        soulCont.innerHTML += `<div class="card" style="border-color:var(--prestige)"><b>${state.soulUpgrades[id].name}</b><br><small>${state.soulUpgrades[id].desc}</small><br>Lv: <span id="${id}-qty">0</span><button id="${id}-btn" onclick="buySoulUpgrade('${id}')">Forge</button></div>`;
+    });
 
-function addResources(amt) {
-    state.money += amt;
-    state.xp += amt;
-    while(state.xp >= state.xpNeed) {
-        state.xp -= state.xpNeed;
-        state.lvl++;
-        state.xpNeed = Math.floor(state.xpNeed * 1.3);
-    }
-    update();
-}
-
-// Global loop
-setInterval(() => {
-    let armyPower = 0;
-    for(let key in state.army) armyPower += state.army[key].count * state.army[key].power;
-    if(armyPower > 0 || state.baseAuto > 0) {
-        addResources((state.baseAuto + armyPower) * state.mult);
-    }
-}, 1000);
-
-// Auto-save every 30 seconds
-setInterval(saveGame, 30000);
-
-function buyArmy(id) {
-    let unit = state.army[id];
-    if(state.money >= unit.cost) {
-        state.money -= unit.cost;
-        unit.count++;
-        unit.cost = Math.floor(unit.cost * 1.2);
-        checkArmyUnlocks();
-        renderArmy();
-        update();
-    }
-}
-
-function checkArmyUnlocks() {
-    if(state.army.t1.count >= 10) state.army.t2.unlocked = true;
-    if(state.army.t2.count >= 10) state.army.t3.unlocked = true;
-    if(state.army.t3.count >= 10) state.army.t4.unlocked = true;
-    if(state.army.t4.count >= 10) state.army.t5.unlocked = true;
-    if(state.army.t5.count >= 10) state.army.t6.unlocked = true;
-    if(state.army.t6.count >= 10) state.army.t7.unlocked = true;
-}
-
-function renderArmy() {
-    const container = document.getElementById("army-container");
-    container.innerHTML = "";
-    for(let id in state.army) {
-        let unit = state.army[id];
-        if(!unit.unlocked) {
-            container.innerHTML += `<div class="card hidden">??? (Buy 10 of previous tier)</div>`;
-            continue;
+    for(let col of ['c','e','k']) {
+        for(let i=1; i<=12; i++) {
+            document.getElementById('col-'+col).innerHTML += `<div class="node-card node-${col}" id="card-${col+i}" onclick="buyTree('${col+i}', '${col}', ${i})"><div class="lock-box">🔒 Row ${i}</div>Tier ${i}<br>Cost: ${formatNum(100*Math.pow(10,i-1))}</div>`;
         }
-        container.innerHTML += `
-            <div class="card ${unit.count >= 10 ? 'bought' : ''}">
-                <b>${unit.name}</b> [Qty: ${unit.count}]<br>
-                Adds +${unit.power} click/sec<br>
-                <button class="army-btn" onclick="buyArmy('${id}')" ${state.money < unit.cost ? 'disabled' : ''}>Buy: ${unit.cost}</button>
-            </div>`;
+    }
+
+    loadGame();
+    setInterval(tick, 100);
+    setInterval(saveGame, 15000);
+}
+
+function updateUI() {
+    document.getElementById("money").innerText = formatNum(state.money);
+    document.getElementById("lvl").innerText = state.lvl;
+    document.getElementById("souls").innerText = formatNum(state.souls);
+    document.getElementById("soul-shop-balance").innerText = formatNum(state.souls);
+    document.getElementById("xp-bar").style.width = (state.xp / state.xpNeed * 100) + "%";
+
+    for(let i=1; i<=20; i++) {
+        let card = document.getElementById("card-t"+i);
+        if(i > 1 && state.army['t'+(i-1)].count < 10) card.classList.add("locked-card");
+        else {
+            card.classList.remove("locked-card");
+            document.getElementById("t"+i+"-qty").innerText = state.army['t'+i].count;
+            document.getElementById("t"+i+"-btn").innerText = "Hire: " + formatNum(state.army['t'+i].cost);
+            document.getElementById("t"+i+"-btn").disabled = state.money < state.army['t'+i].cost;
+        }
+    }
+
+    for(let i=1; i<=10; i++) {
+        let id = 'u'+i, u = state.upgrades[id], card = document.getElementById("card-"+id);
+        if(state.lvl < u.lvlReq) card.classList.add("locked-card");
+        else {
+            card.classList.remove("locked-card");
+            document.getElementById(id+"-qty").innerText = u.lvlOwned;
+            document.getElementById(id+"-btn").innerText = "Cost: " + formatNum(u.cost);
+            document.getElementById(id+"-btn").disabled = state.money < u.cost;
+        }
+    }
+
+    Object.keys(state.soulUpgrades).forEach(id => {
+        let u = state.soulUpgrades[id];
+        document.getElementById(id+"-qty").innerText = u.lvl;
+        document.getElementById(id+"-btn").innerText = "Forge: " + formatNum(u.cost) + " Souls";
+        document.getElementById(id+"-btn").disabled = state.souls < u.cost;
+    });
+
+    for(let col of ['c','e','k']) {
+        for(let i=1; i<=12; i++) {
+            let id = col+i, card = document.getElementById("card-"+id);
+            if(i > state.techRowsUnlocked) card.classList.add("locked-card");
+            else { card.classList.remove("locked-card"); card.classList.toggle("bought", !!state.nodes[id]); }
+        }
+    }
+
+    let req = (state.ascensions + 1) * 10;
+    let earned = Math.floor(Math.sqrt(state.money / 1e6));
+    document.getElementById("pending-souls").innerText = formatNum(earned);
+    document.getElementById("ascend-btn").disabled = (state.lvl < req);
+    document.getElementById("ascend-msg").innerText = (state.lvl < req) ? `Level ${req} Required` : `Ready to Rebirth`;
+}
+
+function clickTurtle(e) {
+    let p = state.baseClick * (1 + state.souls * 0.01);
+    state.money += p; state.xp += p * state.xpMult;
+    while(state.xp >= state.xpNeed) { state.xp -= state.xpNeed; state.lvl++; state.xpNeed *= 1.4; }
+    updateUI();
+}
+
+function buyArmy(id) { let u = state.army[id]; if(state.money>=u.cost){state.money-=u.cost; u.count++; u.cost*=1.35; updateUI();} }
+function buyUpgrade(id) { let u = state.upgrades[id]; if(state.money>=u.cost){state.money-=u.cost; u.lvlOwned++; if(u.type=='click') state.baseClick+=u.pwr; else state.baseAuto+=u.pwr; u.cost*=1.7; updateUI();} }
+
+function buySoulUpgrade(id) {
+    let u = state.soulUpgrades[id];
+    if(state.souls >= u.cost) {
+        state.souls -= u.cost; u.lvl++; u.cost = Math.floor(u.cost * 2.5);
+        if(id === 's3') INITIAL_STATE.money = 1000;
+        updateUI();
     }
 }
 
-function node(id) {
-    if(state.nodes[id]) return;
-    state.nodes[id] = true;
-    if(id === "c1") state.baseClick += 2;
-    if(id === "e1") state.baseAuto += 2;
-    update();
-}
-
-function choiceNode(id) {
-    if(state.choiceMade || state.souls < 1) return;
-    state.choiceMade = true;
-    state.nodes[id] = true;
-    if(id === "p1") state.mult += 5;
-    if(id === "p2") state.mult += 5;
-    update();
+function buyTree(id, type, row) {
+    let cost = 100 * Math.pow(10, row-1);
+    if(!state.nodes[id] && state.money>=cost && row <= state.techRowsUnlocked){
+        state.money-=cost; state.nodes[id]=true;
+        let b = (type=='k')?0.25*row:25*Math.pow(10,row-1);
+        if(type=='c') state.baseClick+=b; if(type=='e') state.baseAuto+=b; if(type=='k') state.xpMult+=b; updateUI();
+    }
 }
 
 function ascend() {
-    if(state.lvl < 10) return;
-    
-    let earned = Math.floor(Math.sqrt(state.money / 500));
-    if(earned < 1) earned = 1; // Minimum 1 soul for first ascension
-
-    state.souls += earned;
-    let keepSouls = state.souls;
-    
-    // RESET PROGRESS
-    state = JSON.parse(JSON.stringify(initialState));
-    state.souls = keepSouls;
-    state.mult = 1 + (state.souls * 0.1); // Souls provide permanent 10% boost each
-
-    saveGame();
-    tab('game');
-    update();
-}
-
-function buyUpgrade(id) {
-    let upg = state.upgrades[id];
-    if(state.money >= upg.cost) {
-        state.money -= upg.cost;
-        upg.lvl++;
-        if(upg.type === 'click') state.baseClick += 2;
-        if(upg.type === 'auto') state.baseAuto += 2;
-        upg.cost = Math.floor(upg.cost * upg.grow);
-        renderShop();
-        update();
-    }
-}
-
-function renderShop() {
-    const container = document.getElementById("shop-container");
-    container.innerHTML = "";
-    for (let id in state.upgrades) {
-        let upg = state.upgrades[id];
-        container.innerHTML += `<div class="card"><b>${upg.name}</b> (Lvl ${upg.lvl})<button onclick="buyUpgrade('${id}')" ${state.money < upg.cost ? 'disabled' : ''}>Buy: ${upg.cost}</button></div>`;
-    }
+    let earned = Math.floor(Math.sqrt(state.money / 1e6));
+    let nextRow = Math.min(12, state.techRowsUnlocked + 1);
+    let keptSouls = state.souls + earned, keptAsc = state.ascensions + 1;
+    let keptSoulShop = state.soulUpgrades;
+    state = JSON.parse(JSON.stringify(INITIAL_STATE));
+    state.souls = keptSouls; state.techRowsUnlocked = nextRow; state.ascensions = keptAsc; state.soulUpgrades = keptSoulShop;
+    saveGame(); location.reload();
 }
 
 function tab(id) {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-    document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active-tab"));
     document.getElementById(id).classList.add("active");
-    document.getElementById("tab-" + id).classList.add("active-tab");
-    if(id === 'army') renderArmy();
-    if(id === 'shop') renderShop();
+    document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active-tab"));
+    document.getElementById("tab-"+id).classList.add("active-tab");
 }
 
-function update() {
-    document.getElementById("money").innerText = Math.floor(state.money).toLocaleString();
-    document.getElementById("lvl").innerText = state.lvl;
-    document.getElementById("souls").innerText = state.souls;
-    
-    let armyPower = 0;
-    for(let key in state.army) armyPower += state.army[key].count * state.army[key].power;
-    
-    document.getElementById("stat-click").innerText = (state.baseClick * state.mult).toFixed(1);
-    document.getElementById("stat-auto").innerText = ((state.baseAuto + armyPower) * state.mult).toFixed(1);
+function saveGame() { localStorage.setItem("turtle_deep_save", JSON.stringify(state)); }
+function loadGame() { let d = localStorage.getItem("turtle_deep_save"); if(d) { state = Object.assign(state, JSON.parse(d)); updateUI(); } }
+function hardReset() { localStorage.clear(); location.reload(); }
 
-    // Tree Refresh
-    document.querySelectorAll('.card').forEach(c => {
-        if(state.nodes[c.id]) c.classList.add('bought');
-        else c.classList.remove('bought');
-        
-        if((c.id === 'p1' || c.id === 'p2')) {
-            if(state.souls < 1) c.style.opacity = "0.2";
-            else c.style.opacity = "1";
-            if(state.choiceMade && !state.nodes[c.id]) c.classList.add('choice-locked');
-            else c.classList.remove('choice-locked');
-        }
-    });
-
-    // Ascend Check
-    let pending = Math.floor(Math.sqrt(state.money / 500));
-    document.getElementById("pending-souls").innerText = pending;
-    
-    if(state.lvl < 10) {
-        document.getElementById("ascend-btn").disabled = true;
-        document.getElementById("ascend-msg").innerText = "LOCKED: You must reach Level 10 to Ascend!";
-    } else {
-        document.getElementById("ascend-btn").disabled = false;
-        document.getElementById("ascend-msg").innerText = "READY TO ASCEND";
-    }
+function tick() {
+    let speed = 1 + (state.soulUpgrades.s1.lvl * 0.25);
+    let auto = state.baseAuto;
+    for(let k in state.army) auto += state.army[k].count * state.army[k].power;
+    state.money += (auto * (1 + state.souls * 0.01) * speed) / 10; updateUI();
 }
-
-// Startup
-loadGame();
-update();
 </script>
 </body>
 </html>
